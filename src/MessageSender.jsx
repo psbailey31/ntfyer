@@ -1,5 +1,5 @@
 // src/MessageSender.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
 import EmojiPicker from 'emoji-picker-react';
@@ -10,6 +10,25 @@ const MessageSender = () => {
   const [topic, setTopic] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [status, setStatus] = useState(null);
+  const [topics, setTopics] = useState([]);
+
+  // Load topics from localStorage on component mount
+  useEffect(() => {
+    const savedTopics = JSON.parse(localStorage.getItem('topics')) || [];
+    setTopics(savedTopics);
+    if (savedTopics.length > 0) {
+      setTopic(savedTopics[0]); // Set the initial topic to the first saved topic
+    }
+  }, []);
+
+  // Handle saving a new topic
+  const saveTopicToLocalStorage = (newTopic) => {
+    if (!topics.includes(newTopic)) {
+      const updatedTopics = [...topics, newTopic];
+      setTopics(updatedTopics);
+      localStorage.setItem('topics', JSON.stringify(updatedTopics));
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!message || !topic || !title) {
@@ -24,7 +43,7 @@ const MessageSender = () => {
       setStatus("Message sent successfully!");
       setTitle('');
       setMessage('');
-      setTopic('');
+      saveTopicToLocalStorage(topic); // Save the topic to localStorage
     } catch (error) {
       setStatus("Error sending message. Please try again.");
       console.error(error);
@@ -61,13 +80,27 @@ const MessageSender = () => {
       </h2>
 
       <div className="relative z-10 mb-4">
-        <input
-          type="text"
-          placeholder="Enter topic"
-          className="p-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white bg-opacity-80 placeholder-gray-500 transition shadow-sm"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-        />
+        {topics.length > 0 ? (
+          <select
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            className="p-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white bg-opacity-80 placeholder-gray-500 transition shadow-sm"
+          >
+            {topics.map((savedTopic, index) => (
+              <option key={index} value={savedTopic}>
+                {savedTopic}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type="text"
+            placeholder="Enter topic"
+            className="p-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white bg-opacity-80 placeholder-gray-500 transition shadow-sm"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+          />
+        )}
       </div>
 
       <div className="relative z-10 mb-4">
